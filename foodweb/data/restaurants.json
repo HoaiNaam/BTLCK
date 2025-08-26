@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "name": "IMPROOK - Cơ sở 1",
+    "address": "123 Đường A, Quận 1",
+    "image": "https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=1200&auto=format&fit=crop"
+  },
+  {
+    "id": 2,
+    "name": "IMPROOK - Cơ sở 2",
+    "address": "456 Đường B, Quận 3",
+    "image": "https://images.unsplash.com/photo-1541542684-4a9c16f2782e?q=80&w=1200&auto=format&fit=crop"
+  }
+]
+
+

@@ -1,0 +1,34 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+
+<h1 class="text-center">Tiếp nhận & xác nhận đơn hàng</h1>
+
+<table class="table">
+    <tr>
+        <th>Mã HĐ</th>
+        <th>Ngày tạo</th>
+        <th>Khách hàng</th>
+        <th>Trạng thái</th>
+        <th></th>
+    </tr>
+    {% for r in receipts %}
+    <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.created_date }}</td>
+        <td>{{ r.user.name }}</td>
+        <td>{{ statuses.get(r.id) }}</td>
+        <td>
+            {% if statuses.get(r.id) != 'confirmed' %}
+            <a class="btn btn-success" href="/admin/orders/{{ r.id }}/confirm">Xác nhận</a>
+            {% else %}
+            <span class="text-success">Đã xác nhận</span>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}
+
+

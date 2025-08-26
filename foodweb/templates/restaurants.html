@@ -1,0 +1,46 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+
+<head>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" rel="stylesheet"/>
+    <style>
+        .card-img-top { height: 200px; object-fit: cover; }
+    </style>
+</head>
+
+<h1 class="text-center">Duyệt nhà hàng</h1>
+
+<form class="mb-3" method="get" action="/restaurants">
+    <div class="input-group">
+        <input type="text" class="form-control" name="kw" placeholder="Tìm nhà hàng..." value="{{ kw or '' }}" />
+        <button class="btn btn-primary">Tìm</button>
+    </div>
+    <div class="mt-2 text-muted">{{ restaurants|length }} nhà hàng</div>
+    <div class="mt-2">
+        <a class="btn btn-outline-secondary" href="/cart">Xem giỏ hàng</a>
+    </div>
+    <hr/>
+</form>
+
+<div class="row">
+    {% for r in restaurants %}
+    <div class="col-md-4 col-sm-12" style="padding:0.5rem;">
+        <div class="card">
+            <img class="card-img-top" src="{{ r.image }}" alt="{{ r.name }}">
+            <div class="card-body">
+                <h4 class="card-title">{{ r.name }}</h4>
+                <p class="card-text">{{ r.address }}</p>
+                <a href="/restaurants/{{ r.id }}" class="btn btn-primary">Xem thực đơn</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    {% if not restaurants %}
+    <p class="text-danger">Không có nhà hàng nào!</p>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+

@@ -1,0 +1,82 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+
+<head>
+    <link href="{{ url_for('static', filename='css/details.css') }}" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" rel="stylesheet"/>
+
+    <style>
+        .btn_order {
+            background: black;
+            color: white;
+            transition: 0.5s;
+        }
+
+        .btn_order:hover {
+             background: white;
+             color: black;
+             transition: 0.5s;
+             box-shadow: 3px 3px 15px 0px #666;
+        }
+
+    </style>
+</head>
+
+<h1 class="text-center text-danger">CHI TIẾT SẢN PHẨM</h1>
+
+<div class="row">
+    <div class="col-md-4 col-sm-6">
+        <img src="{{ product.image }}" class="img-fluid" alt="{{ product.name }}"/>
+    </div>
+    <div class="col-md-8 col-sm-6">
+        <h1>{{ product.name }}</h1>
+        <h4 style="font-weight: bold">Mô tả:</h4>
+        <p>{{ product.description|safe }}</p>
+        <h3 style="font-weight: bold" class="text-success">Giá: {{ "{:,.1f}".format(product.price) }} VNĐ</h3>
+
+        {% for t in product.tags %}
+        <span class="badge bg-success">{{ t.name }}</span>
+        {% endfor %}
+
+        <a href="javascript:;" onclick="addToCart({{product.id}}, '{{product.name}}', {{product.price}}, null)"
+           class="btn_order btn">Đặt hàng</a>
+
+    </div>
+</div>
+
+<hr>
+
+{% if current_user.is_authenticated %}
+
+<div class="comment-block">
+    <div>
+        <div class="form-group">
+            <textarea class="form-control" id="comment-content" placeholder="Nội dung bình luận..."></textarea>
+        </div>
+        <div class="mt-1">
+            <input type="button" onclick="addComment({{ product.id }})" value="Thêm bình luận" class="btn btn_order"/>
+        </div>
+    </div>
+    {% else %}
+    <p>Vui lòng <a href="/login?next=/products/{{ product.id }}">đăng nhập</a> để bình luận!</p>
+    {% endif %}
+    <div class="spinner-grow text-primary spinner"></div>
+
+    <ul class="list-group mt-2" id="comments">
+
+    </ul>
+</div>
+
+{% endblock %}
+
+{% block js %}
+<script src="{{ url_for('static', filename='js/details.js') }}"></script>
+<script>
+    window.onload = () => {
+        loadComments({{ product.id }});
+    }
+
+
+</script>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+
+<head>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" rel="stylesheet"/>
+</head>
+
+<h1 class="text-center">{{ restaurant.name }} - Thực đơn</h1>
+<div class="mb-3 text-center">
+    <a class="btn btn-outline-secondary" href="/restaurants">Quay lại danh sách nhà hàng</a>
+    <a class="btn btn-outline-secondary" href="/cart">Xem giỏ hàng</a>
+    <div class="text-muted">Địa chỉ: {{ restaurant.address }}</div>
+    <hr/>
+    <div class="alert alert-info">Giỏ hàng chỉ chứa món từ một nhà hàng. Khi chọn nhà hàng khác, giỏ cũ sẽ thay thế.</div>
+</div>
+
+<div class="row">
+    {% for p in products %}
+    <div class="product-card col-md-3 col-sm-12" style="padding:0.5rem;">
+        <div class="card">
+            <img class="card-img-top" src="{{ p.image }}" alt="{{ p.name }}">
+            <div class="card-body">
+                <h4 class="card-title">{{ p.name }}</h4>
+                <p class="card-text">{{ "{:,.1f}".format(p.price) }} VNĐ</p>
+                <a href="javascript:;" onclick="addToCart({{p.id}}, '{{p.name}}', {{p.price}}, {{ restaurant.id }})"
+                   class="btn btn-primary">Thêm vào giỏ</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    {% if not products %}
+    <p class="text-danger">Không có món nào!</p>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+

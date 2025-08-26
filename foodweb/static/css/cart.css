@@ -1,0 +1,91 @@
+h1 {
+    margin: 2% 2%;
+    color: black;
+    font-weight: bold;
+}
+
+div.cart-table {
+    width: 100%;
+    height: 400px;
+}
+
+div.cart-table-inner {
+    border-style: solid;
+    border-radius: 5%;
+    width: 65%;
+    height: 100%;
+    overflow: auto;
+    margin: 0 auto;
+}
+
+table.table {
+    margin: 0 auto;
+    width: 90%;
+}
+
+table.table tr th {
+    padding-top: 3%;
+}
+
+table.table, tr, th {
+    height: 80px;
+}
+
+div.alert-total {
+
+
+}
+
+/*
+
+div.alert-total-inner {
+    width: 50%;
+    text-align: center;
+    margin: 0 auto;
+}
+
+div.alert-total-inner > h3 > span {
+    color: red;
+    font-weight: bold;
+}
+
+div.total-pay {
+    color: red;
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 5%;
+}
+
+*/
+
+div.pay-infor {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+div.pay-infor-left {
+
+}
+
+div.pay-infor-right {
+
+}
+
+div.alert-total-inner > h3 > span {
+
+    font-weight: bold;
+}
+
+div.nothing-cart {
+    text-align: center;
+    width: 100%;
+    height: 200px
+}
+
+div.nothing-cart p {
+    color: red;
+    font-weight: bold;
+    font-size: 32px;
+}

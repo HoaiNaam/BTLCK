@@ -1,0 +1,101 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+
+<div class="admin-section-title">
+    <h1>Tiếp nhận & xác nhận đơn hàng</h1>
+    <span class="badge bg-secondary">Quản trị</span>
+    <link href="{{ url_for('static', filename='css/admin.css') }}" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" rel="stylesheet"/>
+    <style>
+        .table { background: white; }
+    </style>
+    
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card">
+        <h6>Tổng hóa đơn</h6>
+        <div class="value">{{ total_receipts }}</div>
+    </div>
+    <div class="stat-card">
+        <h6>Đơn chờ xác nhận</h6>
+        <div class="value">{{ pending_count }}</div>
+    </div>
+    <div class="stat-card">
+        <h6>Đơn đã xác nhận</h6>
+        <div class="value">{{ confirmed_count }}</div>
+    </div>
+    
+</div>
+
+<div class="admin-card">
+    <h4><i class="fa-regular fa-clock"></i> Đơn chờ xác nhận</h4>
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>Pending ID</th>
+            <th>Khách hàng</th>
+            <th>SL món</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for o in pending_orders %}
+        <tr>
+            <td>#{{ o.id }}</td>
+            <td>{{ pending_user_names.get(o.user_id|string) or o.user_id }}</td>
+            <td>{{ o.cart | length }}</td>
+            <td>
+                <a class="btn btn-success btn-sm" href="/admin/orders/pending/{{ o.id }}/confirm">Xác nhận</a>
+            </td>
+        </tr>
+        {% endfor %}
+        {% if not pending_orders %}
+        <tr><td colspan="4" class="text-muted">Không có đơn chờ xác nhận</td></tr>
+        {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<div class="admin-card">
+    <h4><i class="fa-regular fa-file-lines"></i> Hóa đơn</h4>
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>Mã HĐ</th>
+            <th>Ngày tạo</th>
+            <th>Khách hàng</th>
+            <th>Trạng thái</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for r in receipts %}
+        <tr>
+            <td>#{{ r.id }}</td>
+            <td>{{ r.created_date }}</td>
+            <td>{{ r.user.name }}</td>
+            <td>
+                {% if statuses.get(r.id) == 'confirmed' %}
+                    <span class="status-badge status-confirmed">Đã xác nhận</span>
+                {% else %}
+                    <span class="status-badge status-pending">pending</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if statuses.get(r.id) != 'confirmed' %}
+                <a class="btn btn-success btn-sm" href="/admin/orders/{{ r.id }}/confirm">Xác nhận</a>
+                {% else %}
+                <span class="text-success">—</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+
+

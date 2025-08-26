@@ -1,0 +1,10 @@
+h1 {
+    margin: 2% 2%;
+    color: black;
+    font-weight: bold;
+}
+
+div.comment-block {
+    width: 80%;
+    margin: 0 auto;
+}

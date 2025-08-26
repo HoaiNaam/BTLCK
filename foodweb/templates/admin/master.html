@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" rel="stylesheet"/>
+    
+    <!-- Custom CSS -->
+    <style>
+        .admin-navbar {
+            background-color: #343a40;
+            padding: 10px 0;
+            margin-bottom: 20px;
+        }
+        .admin-navbar .navbar-brand {
+            color: white !important;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .admin-navbar .nav-link {
+            color: white !important;
+            margin: 0 10px;
+        }
+        .admin-navbar .nav-link:hover {
+            color: #adb5bd !important;
+        }
+        .home-button {
+            background-color: #28a745;
+            border-color: #28a745;
+            color: white;
+            margin-left: 15px;
+        }
+        .home-button:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+            color: white;
+        }
+    </style>
+    
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg admin-navbar">
+        <div class="container">
+            <a class="navbar-brand" href="/admin">QUẢN TRỊ BÁN HÀNG</a>
+            
+            <div class="navbar-nav ml-auto">
+                <a class="nav-link" href="/admin">Trang chủ</a>
+                <a class="nav-link" href="/admin/category/">Danh mục</a>
+                <a class="nav-link" href="/admin/product/">Sản phẩm</a>
+                <a class="nav-link" href="/admin/user/">Tài khoản</a>
+                <a class="nav-link" href="/admin/receipt/">Hóa đơn</a>
+                <a class="nav-link" href="/admin/receiptdetails/">Chi tiết hóa đơn</a>
+                <a class="nav-link" href="/admin/stats/">Thống kê</a>
+                <a class="nav-link" href="/admin/orders/">Đơn hàng</a>
+                
+                <!-- Nút Quay lại trang chủ -->
+                <a class="btn home-button" href="/" title="Quay lại trang chủ">
+                    <i class="fas fa-home"></i> Quay lại trang chủ
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        {% block body %}{% endblock %}
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block scripts %}{% endblock %}
+    <script>
+        (function() {
+            // Apply only on Product admin pages
+            var path = window.location.pathname || '';
+            if (path.indexOf('/admin/product/') !== 0) return;
+
+            // Confirm on form submit (create/edit)
+            document.addEventListener('submit', function(e) {
+                var form = e.target;
+                if (!form || form.tagName !== 'FORM') return;
+                var ok = window.confirm('Bạn có muốn thay đổi?');
+                if (!ok) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            }, true);
+
+            // Confirm on delete triggers (links or buttons)
+            document.addEventListener('click', function(e) {
+                var el = e.target.closest('a,button');
+                if (!el) return;
+                var href = el.getAttribute('href') || '';
+                var isDelete = false;
+                // common patterns in Flask-Admin
+                if (href.indexOf('delete') !== -1) isDelete = true;
+                if (!isDelete && el.classList.contains('btn-danger')) isDelete = true;
+                if (isDelete) {
+                    var ok = window.confirm('Bạn có muốn thay đổi?');
+                    if (!ok) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                }
+            }, true);
+        })();
+    </script>
+</body>
+</html>
