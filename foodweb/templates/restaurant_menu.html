@@ -15,24 +15,107 @@
     <div class="alert alert-info">Giỏ hàng chỉ chứa món từ một nhà hàng. Khi chọn nhà hàng khác, giỏ cũ sẽ thay thế.</div>
 </div>
 
-<div class="row">
-    {% for p in products %}
-    <div class="product-card col-md-3 col-sm-12" style="padding:0.5rem;">
-        <div class="card">
-            <img class="card-img-top" src="{{ p.image }}" alt="{{ p.name }}">
-            <div class="card-body">
-                <h4 class="card-title">{{ p.name }}</h4>
-                <p class="card-text">{{ "{:,.1f}".format(p.price) }} VNĐ</p>
-                <a href="javascript:;" onclick="addToCart({{p.id}}, '{{p.name}}', {{p.price}}, {{ restaurant.id }})"
-                   class="btn btn-primary">Thêm vào giỏ</a>
+<!-- Hiển thị theo danh mục -->
+{% if categories %}
+<div class="mb-4">
+    <h3 class="text-center mb-3">Danh mục</h3>
+    <div class="d-flex justify-content-center flex-wrap">
+        {% for category in categories %}
+        <button class="btn btn-outline-primary m-1" onclick="showCategory({{ category.id }})">
+            {{ category.name }}
+        </button>
+        {% endfor %}
+        <button class="btn btn-primary m-1" onclick="showAllProducts()">
+            Tất cả
+        </button>
+    </div>
+</div>
+{% endif %}
+
+<!-- Hiển thị sản phẩm theo danh mục -->
+{% for category in categories %}
+<div class="category-section mb-4" id="category-{{ category.id }}" style="display: none;">
+    <h3 class="text-center mb-3">{{ category.name }}</h3>
+    <div class="row">
+        {% for product in products %}
+            {% if product.category_id == category.id %}
+            <div class="product-card col-md-3 col-sm-6 col-12" style="padding:0.5rem;">
+                <div class="card h-100">
+                    <img class="card-img-top" src="{{ product.image }}" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <p class="card-text flex-grow-1">{{ product.description }}</p>
+                        <p class="card-text"><strong>{{ "{:,.0f}".format(product.price) }} VNĐ</strong></p>
+                        <div class="mt-auto">
+                            <a href="/products/{{ product.id }}" class="btn btn-outline-info btn-sm mb-2 w-100">Xem chi tiết</a>
+                            <a href="javascript:;" onclick="addToCart({{product.id}}, '{{product.name}}', {{product.price}}, {{ restaurant.id }})"
+                               class="btn btn-primary btn-sm w-100">Thêm vào giỏ</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endfor %}
+
+<!-- Hiển thị tất cả sản phẩm -->
+<div class="category-section" id="all-products">
+    <h3 class="text-center mb-3">Tất cả sản phẩm</h3>
+    <div class="row">
+        {% for product in products %}
+        <div class="product-card col-md-3 col-sm-6 col-12" style="padding:0.5rem;">
+            <div class="card h-100">
+                <img class="card-img-top" src="{{ product.image }}" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ product.name }}</h5>
+                    <p class="card-text flex-grow-1">{{ product.description }}</p>
+                    <p class="card-text"><strong>{{ "{:,.0f}".format(product.price) }} VNĐ</strong></p>
+                    <div class="mt-auto">
+                        <a href="/products/{{ product.id }}" class="btn btn-outline-info btn-sm mb-2 w-100">Xem chi tiết</a>
+                        <a href="javascript:;" onclick="addToCart({{product.id}}, '{{product.name}}', {{product.price}}, {{ restaurant.id }})"
+                           class="btn btn-primary btn-sm w-100">Thêm vào giỏ</a>
+                    </div>
+                </div>
             </div>
         </div>
+        {% endfor %}
+        {% if not products %}
+        <p class="text-danger">Không có món nào!</p>
+        {% endif %}
     </div>
-    {% endfor %}
-    {% if not products %}
-    <p class="text-danger">Không có món nào!</p>
-    {% endif %}
 </div>
+
+<script>
+function showCategory(categoryId) {
+    // Ẩn tất cả danh mục
+    document.querySelectorAll('.category-section').forEach(section => {
+        section.style.display = 'none';
+    });
+    
+    // Hiển thị danh mục được chọn
+    const selectedCategory = document.getElementById('category-' + categoryId);
+    if (selectedCategory) {
+        selectedCategory.style.display = 'block';
+    }
+}
+
+function showAllProducts() {
+    // Ẩn tất cả danh mục
+    document.querySelectorAll('.category-section').forEach(section => {
+        section.style.display = 'none';
+    });
+    
+    // Hiển thị tất cả sản phẩm
+    document.getElementById('all-products').style.display = 'block';
+}
+
+// Hiển thị tất cả sản phẩm khi trang được load
+document.addEventListener('DOMContentLoaded', function() {
+    showAllProducts();
+});
+</script>
 
 {% endblock %}
 

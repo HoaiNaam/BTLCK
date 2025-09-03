@@ -23,18 +23,8 @@ app.add_url_rule('/api/products/<product_id>/comments', 'comment-add', controlle
 app.add_url_rule('/restaurants', 'restaurants', controllers.restaurants_list)
 app.add_url_rule('/restaurants/<int:restaurant_id>', 'restaurant-menu', controllers.restaurant_menu)
 
-# Admin orders handled by Flask-Admin OrdersView now
-
-# @app.route('/confirmOTP', methods = ['post', 'get'])
-# def get_otp():
-#     if request.method.__eq__('POST'):
-#         return redirect('/register')
-#     return render_template("confirmOTP.html")
-
 @app.context_processor
 def common_attr():
-    # By default, do not show any categories in the header.
-    # Restaurant pages will explicitly pass their own filtered categories.
     return {
         'categories': [],
         'cart': utils.cart_stats(session.get(app.config['CART_KEY']))

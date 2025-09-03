@@ -122,8 +122,8 @@ if __name__ == '__main__':
                  image='https://res.cloudinary.com/dhwuwy0to/image/upload/v1678329949/Vinh_2_nybzzs.jpg')
         db.session.add_all([u, u1, u2])
         db.session.commit()
-        c1 = Category(name='Trà sữa')
-        c2 = Category(name='Trà trái cây')
+        c1 = Category(name='Trà trái cây')
+        c2 = Category(name='Trà sữa')
         c3 = Category(name='Topping')
 
         db.session.add_all([c1, c2, c3])

@@ -31,7 +31,7 @@ SECRET_KEY_V3 ="6LeW7qorAAAAALZxfOdFbvtCvZov_-19CgSDsG9s"
 app.config['RECAPTCHA_PUBLIC_KEY'] = SITE_KEY_V2
 app.config['RECAPTCHA_PRIVATE_KEY'] = SECRET_KEY_V2
 
-# Twilio credentials removed
+
 
 
 

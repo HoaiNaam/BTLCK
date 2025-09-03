@@ -282,10 +282,7 @@ def _get_or_create_category(name: str):
 
 
 def ensure_fast_food_items_for_restaurant(restaurant_id: int = 2):
-    """Ensure around 10 fast food products exist and are mapped to the given restaurant.
 
-    Images use existing Cloudinary links already present in the codebase.
-    """
     fast_food_category = _get_or_create_category('Thức ăn nhanh')
 
     seed_items = [

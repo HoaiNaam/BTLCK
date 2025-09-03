@@ -1,47 +1,66 @@
 [
   {
     "id": 1,
-    "name": "iPhone 7 Plus",
-    "description": "Apple, 32GB, RAM: 3GB, iOS13",
-    "price": 17000000,
-    "image": "https://res.cloudinary.com/dxxwcby8l/image/upload/v1646729569/fi9v6vdljyfmiltegh7k.jpg",
+    "name": "Trà đào",
+    "description": "Trà đào tươi mát, hương vị tự nhiên",
+    "price": 35000,
+    "image": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?q=80&w=500&auto=format&fit=crop",
     "category_id": 1
   },
   {
     "id": 2,
-    "name": "iPad Pro 2020",
-    "description": "Apple, 128GB, RAM: 6GB",
-    "price": 37000000,
-    "image": "https://res.cloudinary.com/dxxwcby8l/image/upload/v1647248722/r8sjly3st7estapvj19u.jpg",
-    "category_id": 2
+    "name": "Trà vải",
+    "description": "Trà vải thơm ngọt, hương vị đặc trưng",
+    "price": 35000,
+    "image": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?q=80&w=500&auto=format&fit=crop",
+    "category_id": 1
   },
   {
     "id": 3,
-    "name": "Galaxy Note 10 Plus",
-    "description": "Samsung, 64GB, RAML: 6GB",
-    "price": 24000000,
-    "image": "https://res.cloudinary.com/dxxwcby8l/image/upload/v1646729569/fi9v6vdljyfmiltegh7k.jpg",
-    "category_id": 1
-  }, {
+    "name": "Trà xanh sữa dâu",
+    "description": "Trà xanh kết hợp sữa dâu tươi",
+    "price": 40000,
+    "image": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?q=80&w=500&auto=format&fit=crop",
+    "category_id": 2
+  },
+  {
     "id": 4,
-    "name": "Galaxy Note 10 Plus",
-    "description": "Samsung, 64GB, RAML: 6GB",
-    "price": 24000000,
-    "image": "https://res.cloudinary.com/dxxwcby8l/image/upload/v1646729569/fi9v6vdljyfmiltegh7k.jpg",
+    "name": "Trà sữa khoai môn",
+    "description": "Trà sữa khoai môn thơm béo",
+    "price": 45000,
+    "image": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?q=80&w=500&auto=format&fit=crop",
     "category_id": 2
-  }, {
+  },
+  {
     "id": 5,
-    "name": "Galaxy Note 10 Plus",
-    "description": "Samsung, 64GB, RAML: 6GB",
-    "price": 24000000,
-    "image": "https://res.cloudinary.com/dxxwcby8l/image/upload/v1647248722/r8sjly3st7estapvj19u.jpg",
+    "name": "Trà sữa pudding đậu đỏ",
+    "description": "Trà sữa với pudding đậu đỏ ngọt bùi",
+    "price": 50000,
+    "image": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?q=80&w=500&auto=format&fit=crop",
     "category_id": 2
-  }, {
+  },
+  {
     "id": 6,
-    "name": "Galaxy Note 10 Plus",
-    "description": "Samsung, 64GB, RAML: 6GB",
-    "price": 24000000,
-    "image": "https://res.cloudinary.com/dxxwcby8l/image/upload/v1646729569/fi9v6vdljyfmiltegh7k.jpg",
+    "name": "Trân châu đen",
+    "description": "Trân châu đen dai giòn, thêm vào đồ uống",
+    "price": 10000,
+    "image": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?q=80&w=500&auto=format&fit=crop",
+    "category_id": 3
+  },
+  {
+    "id": 7,
+    "name": "Trân châu trắng",
+    "description": "Trân châu trắng mềm dẻo",
+    "price": 10000,
+    "image": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?q=80&w=500&auto=format&fit=crop",
+    "category_id": 3
+  },
+  {
+    "id": 8,
+    "name": "Thạch dừa",
+    "description": "Thạch dừa tươi mát, giòn sần sật",
+    "price": 8000,
+    "image": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?q=80&w=500&auto=format&fit=crop",
     "category_id": 3
   }
 ]
