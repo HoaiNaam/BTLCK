@@ -15,7 +15,13 @@
 </div>
 {% endif %}
 <div class="register-form">
-    <form method="post" action="/register">
+    <form method="post" action="/register" enctype="multipart/form-data">
+        <div class="form-floating mb-3 mt-3">
+            <input type="text" class="form-control" required id="name" placeholder="Nhập họ tên"
+                   name="name">
+            <label for="name">Họ tên</label>
+        </div>
+
         <div class="form-floating mb-3 mt-3">
             <input type="text" class="form-control" required id="username" placeholder="Nhập tên đăng nhập"
                    name="username">
@@ -34,17 +40,68 @@
             <label for="confirm">Xác nhận mật khẩu</label>
         </div>
 
-        
+        <div class="form-floating mt-3 mb-3">
+            <input type="file" class="form-control" id="avatar" name="avatar" accept="image/*">
+            <label for="avatar">Ảnh đại diện (tùy chọn)</label>
+            <div class="form-text">Chấp nhận định dạng: PNG, JPG, JPEG, GIF, WEBP</div>
+        </div>
 
-<!--        <div class="form-floating mb-3 mt-3">-->
-<!--            <input type="text" class="form-control" required id="numPhone" placeholder="Nhập họ tên" name="numPhone">-->
-<!--            <label for="numPhone">Số điện thoại</label>-->
-<!--        </div>-->
+        <div class="mt-3 mb-3">
+            <div class="g-recaptcha" data-sitekey="6LeE7qorAAAAANnfXIu99uAb4xCD89ik6ftM3RQ0" data-callback="onRecaptchaSuccess" data-expired-callback="onRecaptchaExpired"></div>
+        </div>
 
-        
         <div>
             <input type="submit" value="Đăng ký" class="btn btn_order"/>
         </div>
     </form>
 </div>
+
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<script>
+let recaptchaCompleted = false;
+
+// Callback khi reCAPTCHA thành công
+function onRecaptchaSuccess(response) {
+    recaptchaCompleted = true;
+    console.log('reCAPTCHA completed:', response);
+}
+
+// Callback khi reCAPTCHA hết hạn
+function onRecaptchaExpired() {
+    recaptchaCompleted = false;
+    console.log('reCAPTCHA expired');
+}
+
+// Reset reCAPTCHA sau khi submit
+document.addEventListener('DOMContentLoaded', function() {
+    // Reset reCAPTCHA ngay khi trang load
+    grecaptcha.ready(function() {
+        grecaptcha.reset();
+    });
+    
+    document.querySelector('form').addEventListener('submit', function(e) {
+        // Kiểm tra reCAPTCHA trước khi submit
+        if (!recaptchaCompleted) {
+            e.preventDefault();
+            alert('Vui lòng hoàn thành thử thách reCAPTCHA!');
+            return false;
+        }
+        
+        // Reset reCAPTCHA sau khi submit thành công
+        setTimeout(function() {
+            grecaptcha.reset();
+            recaptchaCompleted = false;
+        }, 1000);
+    });
+    
+    // Reset reCAPTCHA mỗi 30 giây để đảm bảo thử thách mới
+    setInterval(function() {
+        if (recaptchaCompleted) {
+            grecaptcha.reset();
+            recaptchaCompleted = false;
+        }
+    }, 30000);
+});
+</script>
+
 {% endblock %}

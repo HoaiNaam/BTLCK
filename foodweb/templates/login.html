@@ -29,8 +29,8 @@
             <label for="password">Mật khẩu</label>
         </div>
 
-        <div>
-            {{ form.recaptcha() }}
+        <div class="mt-3 mb-3">
+            <div class="g-recaptcha" data-sitekey="6LeE7qorAAAAANnfXIu99uAb4xCD89ik6ftM3RQ0" data-callback="onRecaptchaSuccess" data-expired-callback="onRecaptchaExpired"></div>
         </div>
 
         <!--        <div style = "witdh: 300px; height: 100px; background: red" id = "demo-form">-->
@@ -59,4 +59,53 @@
         </div>
     </form>
 </div>
+
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<script>
+let recaptchaCompleted = false;
+
+// Callback khi reCAPTCHA thành công
+function onRecaptchaSuccess(response) {
+    recaptchaCompleted = true;
+    console.log('reCAPTCHA completed:', response);
+}
+
+// Callback khi reCAPTCHA hết hạn
+function onRecaptchaExpired() {
+    recaptchaCompleted = false;
+    console.log('reCAPTCHA expired');
+}
+
+// Reset reCAPTCHA sau khi submit
+document.addEventListener('DOMContentLoaded', function() {
+    // Reset reCAPTCHA ngay khi trang load
+    grecaptcha.ready(function() {
+        grecaptcha.reset();
+    });
+    
+    document.querySelector('form').addEventListener('submit', function(e) {
+        // Kiểm tra reCAPTCHA trước khi submit
+        if (!recaptchaCompleted) {
+            e.preventDefault();
+            alert('Vui lòng hoàn thành thử thách reCAPTCHA!');
+            return false;
+        }
+        
+        // Reset reCAPTCHA sau khi submit thành công
+        setTimeout(function() {
+            grecaptcha.reset();
+            recaptchaCompleted = false;
+        }, 1000);
+    });
+    
+    // Reset reCAPTCHA mỗi 30 giây để đảm bảo thử thách mới
+    setInterval(function() {
+        if (recaptchaCompleted) {
+            grecaptcha.reset();
+            recaptchaCompleted = false;
+        }
+    }, 30000);
+});
+</script>
+
 {% endblock %}

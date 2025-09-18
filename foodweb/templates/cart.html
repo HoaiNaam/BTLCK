@@ -49,10 +49,42 @@
 
     <div class="pay-infor-right total-pay">
         {% if current_user.is_authenticated %}
-        <input type="button" value="Thanh toán" onclick="pay()" class="btn btn-success"/>
-<!--        <div>-->
-<!--            {{ form.recaptcha() }}-->
-<!--        </div>-->
+        <div class="payment-methods">
+            <h4>Chọn phương thức thanh toán:</h4>
+            <div class="payment-options">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="payment_method" id="cash" value="1" checked>
+                    <label class="form-check-label" for="cash">
+                        <i class="fas fa-money-bill-wave"></i> Tiền mặt
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="payment_method" id="bank_transfer" value="2">
+                    <label class="form-check-label" for="bank_transfer">
+                        <i class="fas fa-university"></i> Chuyển khoản ngân hàng
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="payment_method" id="momo" value="3">
+                    <label class="form-check-label" for="momo">
+                        <i class="fas fa-mobile-alt"></i> MoMo
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="payment_method" id="zalopay" value="4">
+                    <label class="form-check-label" for="zalopay">
+                        <i class="fas fa-credit-card"></i> ZaloPay
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="payment_method" id="vnpay" value="5">
+                    <label class="form-check-label" for="vnpay">
+                        <i class="fas fa-credit-card"></i> VNPay
+                    </label>
+                </div>
+            </div>
+        </div>
+        <button type="button" class="btn btn-success" id="pay-button" style="margin-top: 10px; width: 100%; padding: 10px;">Thanh toán</button>
         {% else %}
         <p>Vui lòng <a href="/login?next=/cart">đăng nhập</a> để thanh toán!</p>
         {% endif %}
@@ -64,5 +96,18 @@
     <p>Giỏ không có hàng!</p>
 </div>
 {% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Kiểm tra nút thanh toán
+    const payButton = document.getElementById('pay-button');
+    if (payButton) {
+        payButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            pay();
+        });
+    }
+});
+</script>
 
 {% endblock %}

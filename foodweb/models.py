@@ -16,6 +16,13 @@ class UserRole(UserEnum):
     USER = 1
     ADMIN = 2
 
+class PaymentMethod(UserEnum):
+    CASH = 1
+    BANK_TRANSFER = 2
+    MOMO = 3
+    ZALOPAY = 4
+    VNPAY = 5
+
 
 class BaseModel(db.Model):
     __abstract__ = True
@@ -65,7 +72,7 @@ class User(BaseModel, UserMixin):
     name = Column(String(50), nullable=False)
     username = Column(String(50), nullable=False, unique=True)
     password = Column(String(50), nullable=False)
-    image = Column(String(100), nullable=False)
+    image = Column(String(500), nullable=False)
     active = Column(Boolean, default=True)
     user_role = Column(Enum(UserRole), default=UserRole.USER)
     receipts = relationship('Receipt', backref='user', lazy=True)
@@ -78,6 +85,7 @@ class User(BaseModel, UserMixin):
 class Receipt(BaseModel):
     created_date = Column(DateTime, default=datetime.now())
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
+    payment_method = Column(Enum(PaymentMethod), default=PaymentMethod.CASH)
     details = relationship('ReceiptDetails', backref='receipt', lazy=True)
 
     def __str__(self):
@@ -99,6 +107,25 @@ class Comment(BaseModel):
     created_date = Column(DateTime, default=datetime.now())
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
     product_id = Column(Integer, ForeignKey(Product.id), nullable=False)
+
+    def __str__(self):
+        return self.content
+
+
+class Restaurant(BaseModel):
+    __tablename__ = 'restaurant'
+    
+    name = Column(String(100), nullable=False)
+    address = Column(String(200), nullable=False)
+    description = Column(Text)
+    image = Column(String(500))
+    phone = Column(String(20))
+    email = Column(String(100))
+    active = Column(Boolean, default=True)
+    created_date = Column(DateTime, default=datetime.now())
+    
+    def __str__(self):
+        return self.name
 
 
 if __name__ == '__main__':

@@ -58,12 +58,40 @@ function deleteCart(productId) {
 }
 
 function pay() {
+    // Lấy phương thức thanh toán được chọn
+    const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+    
+    if (!paymentMethod) {
+        alert('Vui lòng chọn phương thức thanh toán!');
+        return;
+    }
+    
     if (confirm("Bạn chắc chắn thanh toán không?") == true) {
-        fetch("/api/pay").then(res => res.json()).then(data => {
-            if (data.status === 200)
+        const requestData = {
+            "payment_method": paymentMethod.value
+        };
+        
+        fetch("/api/pay", {
+            method: "post",
+            body: JSON.stringify(requestData),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+        }).then(data => {
+            if (data.status === 200) {
+                alert('Thanh toán thành công!');
                 location.reload()
-            else
+            } else {
                 alert("Hệ thống đang bị lỗi!")
+            }
+        }).catch(err => {
+            console.error('Payment error:', err);
+            alert("Có lỗi xảy ra khi thanh toán: " + err.message);
         })
     }
 }

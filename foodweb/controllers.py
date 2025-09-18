@@ -4,11 +4,15 @@ from click import confirm
 from flask import render_template, request, redirect, session, jsonify
 from flask_wtf import FlaskForm, RecaptchaField
 from flask_wtf.recaptcha import validators
-
+from werkzeug.utils import secure_filename
+import os
+import uuid
+import requests
+from datetime import datetime
 
 from foodweb import app, dao, admin, login, utils, db
 from flask_login import login_user, logout_user, login_required, current_user
-from foodweb.models import Receipt, UserRole
+from foodweb.models import Receipt, UserRole, PaymentMethod
 from foodweb.decorators import annonymous_user
 import cloudinary.uploader
 from werkzeug.utils import redirect
@@ -46,18 +50,86 @@ def login_admin():
 def register():
     err_msg = ''
     if request.method.__eq__('POST'):
+        # Kiểm tra reCAPTCHA response
+        recaptcha_response = request.form.get('g-recaptcha-response')
+        if not recaptcha_response:
+            err_msg = "Vui lòng hoàn thành thử thách reCAPTCHA!"
+            return render_template('register.html', err_msg=err_msg)
+        
+        # Verify reCAPTCHA với Google
+        secret_key = app.config['RECAPTCHA_PRIVATE_KEY']
+        verify_url = 'https://www.google.com/recaptcha/api/siteverify'
+        verify_data = {
+            'secret': secret_key,
+            'response': recaptcha_response,
+            'remoteip': request.remote_addr
+        }
+        
+        try:
+            verify_response = requests.post(verify_url, data=verify_data)
+            verify_result = verify_response.json()
+            
+            if not verify_result.get('success'):
+                err_msg = "reCAPTCHA không hợp lệ! Vui lòng thử lại."
+                return render_template('register.html', err_msg=err_msg)
+        except Exception as e:
+            print(f"Lỗi verify reCAPTCHA: {str(e)}")
+            err_msg = "Lỗi xác minh reCAPTCHA! Vui lòng thử lại."
+            return render_template('register.html', err_msg=err_msg)
+        
         username = request.form['username']
         password = request.form['password']
         confirm = request.form['confirm']
+        name = request.form.get('name', username)  # Lấy tên từ form, mặc định là username
+        
         if password.__eq__(confirm):
             try:
-                # Đăng ký cơ bản không cần OTP, dùng username làm tên hiển thị
-                dao.register(name=username,
+                # Kiểm tra user đã tồn tại chưa
+                existing_user = dao.get_user_by_username(username)
+                if existing_user:
+                    err_msg = 'Tên đăng nhập đã tồn tại!'
+                    return render_template('register.html', err_msg=err_msg)
+                
+                # Xử lý upload ảnh avatar
+                avatar_url = None
+                if 'avatar' in request.files:
+                    file = request.files['avatar']
+                    if file and file.filename != '':
+                        try:
+                            # Kiểm tra định dạng file
+                            allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+                            if '.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in allowed_extensions:
+                                # Tạo tên file unique và ngắn gọn
+                                file_extension = file.filename.rsplit('.', 1)[1].lower()
+                                unique_filename = f"{uuid.uuid4().hex[:8]}.{file_extension}"
+                                
+                                # Lưu file vào thư mục uploads/avatars
+                                upload_folder = os.path.join(app.root_path, 'static', 'uploads', 'avatars')
+                                os.makedirs(upload_folder, exist_ok=True)
+                                file_path = os.path.join(upload_folder, unique_filename)
+                                file.save(file_path)
+                                
+                                # Tạo URL để truy cập ảnh
+                                avatar_url = f"/static/uploads/avatars/{unique_filename}"
+                            else:
+                                err_msg = 'Định dạng file không được hỗ trợ! Chỉ chấp nhận: PNG, JPG, JPEG, GIF, WEBP'
+                                return render_template('register.html', err_msg=err_msg)
+                        except Exception as upload_error:
+                            print(f"Lỗi upload ảnh: {str(upload_error)}")
+                            # Nếu upload lỗi, vẫn cho phép đăng ký nhưng không có avatar
+                            avatar_url = None
+                
+                # Đăng ký user với avatar
+                dao.register(name=name,
                              username=username,
-                             password=password)
+                             password=password,
+                             avatar=avatar_url)
 
                 return redirect('/login')
-            except:
+            except Exception as e:
+                print(f"Lỗi đăng ký: {str(e)}")
+                import traceback
+                traceback.print_exc()
                 err_msg = 'Hệ thống đang có lỗi! Vui lòng quay lại sau!'
         else:
             err_msg = 'Mật khẩu KHÔNG khớp!'
@@ -68,25 +140,44 @@ def register():
 
 @annonymous_user
 def login_my_user():
-    form = ContactForm()
     err_msg = ""
     if request.method.__eq__('POST'):
-        if request.form.get('g-recaptcha-response'):
-            username = request.form['username']
-            password = request.form['password']
-
-            user = dao.auth_user(username=username, password=password)
-            if user:
-                login_user(user=user)
-
-                n = request.args.get("next")
-                return redirect(n if n else '/')
-            else:
-                err_msg = "Sai tài khoản hoặc mật khẩu!"
+        # Kiểm tra reCAPTCHA response
+        recaptcha_response = request.form.get('g-recaptcha-response')
+        if not recaptcha_response:
+            err_msg = "Vui lòng hoàn thành thử thách reCAPTCHA!"
         else:
-            err_msg = "Vui lòng xác minh mình là con người!"
+            # Verify reCAPTCHA với Google
+            secret_key = app.config['RECAPTCHA_PRIVATE_KEY']
+            verify_url = 'https://www.google.com/recaptcha/api/siteverify'
+            verify_data = {
+                'secret': secret_key,
+                'response': recaptcha_response,
+                'remoteip': request.remote_addr
+            }
+            
+            try:
+                verify_response = requests.post(verify_url, data=verify_data)
+                verify_result = verify_response.json()
+                
+                if verify_result.get('success'):
+                    username = request.form['username']
+                    password = request.form['password']
 
-    return render_template('login.html', form=form, err_msg=err_msg)
+                    user = dao.auth_user(username=username, password=password)
+                    if user:
+                        login_user(user=user)
+                        n = request.args.get("next")
+                        return redirect(n if n else '/')
+                    else:
+                        err_msg = "Sai tài khoản hoặc mật khẩu!"
+                else:
+                    err_msg = "reCAPTCHA không hợp lệ! Vui lòng thử lại."
+            except Exception as e:
+                print(f"Lỗi verify reCAPTCHA: {str(e)}")
+                err_msg = "Lỗi xác minh reCAPTCHA! Vui lòng thử lại."
+
+    return render_template('login.html', err_msg=err_msg)
 
 
 def logout_my_user():
@@ -226,10 +317,14 @@ def pay():
 
     if cart:
         try:
-            pending_id = dao.add_pending_order(current_user.id, cart)
+            # Lấy phương thức thanh toán từ request
+            payment_method_id = request.json.get('payment_method', 1)  # Mặc định là tiền mặt
+            payment_method = PaymentMethod(int(payment_method_id))
+            
+            pending_id = dao.add_pending_order(current_user.id, cart, payment_method)
         except Exception as ex:
-            print(str(ex))
-            return jsonify({"status": 500})
+            print(f"Error in pay(): {str(ex)}")
+            return jsonify({"status": 500, "error": str(ex)})
         else:
             del session[key]
             session.pop('cart_restaurant_id', None)

@@ -1,5 +1,5 @@
 
-from foodweb.models import Category, Product, User, Receipt, ReceiptDetails, Comment
+from foodweb.models import Category, Product, User, Receipt, ReceiptDetails, Comment, PaymentMethod, Restaurant
 from flask_login import current_user
 from sqlalchemy import func
 from foodweb import db
@@ -39,10 +39,12 @@ def auth_user(username, password):
 def get_user_by_id(user_id):
     return User.query.get(user_id)
 
+def get_user_by_username(username):
+    return User.query.filter(User.username.__eq__(username.strip())).first()
+
 
 def register(name, username, password, phonenumber=None, avatar=None):
     password = str(hashlib.md5(password.strip().encode('utf-8')).hexdigest())
-
     # Cung cấp giá trị mặc định nếu không truyền avatar
     default_avatar_url = avatar if (avatar is not None and str(avatar).strip() != "") else \
         "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg"
@@ -70,10 +72,7 @@ def save_receipt(cart):
     return None
 
 
-# -------------------- Restaurant helpers (JSON-based) --------------------
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
-
-
 def _read_json(file_name):
     file_path = os.path.join(DATA_DIR, file_name)
     if not os.path.exists(file_path):
@@ -92,18 +91,45 @@ def _write_json(file_name, data):
 
 
 def load_restaurants(kw=None):
-    data = _read_json('restaurants.json') or []
+    # Load từ database thay vì JSON
+    query = Restaurant.query.filter(Restaurant.active == True)
+    
     if kw:
         kw_norm = kw.strip().lower()
-        return [r for r in data if kw_norm in r.get('name', '').lower()]
-    return data
+        query = query.filter(Restaurant.name.contains(kw_norm))
+    
+    # Sắp xếp theo ID giảm dần để Cơ Sở 3 (ID: 1) xuất hiện cuối cùng
+    restaurants = query.order_by(Restaurant.id.desc()).all()
+    
+    # Convert database objects to dictionary format for compatibility
+    result = []
+    for r in restaurants:
+        result.append({
+            'id': r.id,
+            'name': r.name,
+            'address': r.address,
+            'description': r.description or '',
+            'image': r.image or '',
+            'phone': r.phone or '',
+            'email': r.email or ''
+        })
+    
+    return result
 
 
 def get_restaurant_by_id(restaurant_id):
-    data = load_restaurants()
-    for r in data:
-        if int(r.get('id')) == int(restaurant_id):
-            return r
+    # Load từ database thay vì JSON
+    restaurant = Restaurant.query.filter(Restaurant.id == int(restaurant_id), Restaurant.active == True).first()
+    if restaurant:
+        return {
+            'id': restaurant.id,
+            'name': restaurant.name,
+            'address': restaurant.address,
+            'description': restaurant.description or '',
+            'image': restaurant.image or '',
+            'phone': restaurant.phone or '',
+            'email': restaurant.email or ''
+        }
     return None
 
 
@@ -114,7 +140,6 @@ def load_products_by_ids(product_ids):
 
 
 def load_categories_by_product_ids(product_ids):
-    """Return categories that have at least one active product within product_ids."""
     if not product_ids:
         return []
     return db.session.query(Category).join(Product, Product.category_id.__eq__(Category.id)) \
@@ -175,7 +200,6 @@ def _set_restaurant_menu_product_ids(restaurant_id, product_ids):
 
 
 def add_product_to_restaurant_menu(restaurant_id: int, product_id: int):
-    """Add a product to a restaurant's menu mapping (JSON-backed)."""
     current = set(get_restaurant_menu_product_ids(restaurant_id))
     current.add(int(product_id))
     _set_restaurant_menu_product_ids(restaurant_id, list(current))
@@ -183,7 +207,6 @@ def add_product_to_restaurant_menu(restaurant_id: int, product_id: int):
 
 
 def remove_product_from_restaurant_menu(restaurant_id: int, product_id: int):
-    """Remove a product from a restaurant's menu mapping if present."""
     current = set(get_restaurant_menu_product_ids(restaurant_id))
     if int(product_id) in current:
         current.remove(int(product_id))
@@ -191,10 +214,8 @@ def remove_product_from_restaurant_menu(restaurant_id: int, product_id: int):
     return True
 
 
-# -------------------- Order status (JSON-backed) --------------------
+
 ORDER_STATUS_FILE = 'orders_status.json'
-
-
 def get_order_status(receipt_id):
     data = _read_json(ORDER_STATUS_FILE) or {}
     return data.get(str(receipt_id), 'pending')
@@ -207,17 +228,23 @@ def update_order_status(receipt_id, status):
     return True
 
 
-# -------------------- Pending orders (JSON-backed) --------------------
+
 PENDING_ORDERS_FILE = 'pending_orders.json'
-
-
-def add_pending_order(user_id, cart):
+def add_pending_order(user_id, cart, payment_method=PaymentMethod.CASH):
     data = _read_json(PENDING_ORDERS_FILE) or {"seq": 0, "orders": {}}
     data["seq"] = int(data.get("seq", 0)) + 1
     pending_id = str(data["seq"])
+    
+    # Đảm bảo payment_method là PaymentMethod enum
+    if isinstance(payment_method, PaymentMethod):
+        payment_method_value = payment_method.value
+    else:
+        payment_method_value = int(payment_method)
+    
     data["orders"][pending_id] = {
         "user_id": int(user_id),
         "cart": cart,
+        "payment_method": payment_method_value,
         "created_at": datetime.now().isoformat()
     }
     _write_json(PENDING_ORDERS_FILE, data)
@@ -257,9 +284,9 @@ def remove_pending_order(pending_id):
     return False
 
 
-def save_receipt_for_user(cart, user_id):
+def save_receipt_for_user(cart, user_id, payment_method=PaymentMethod.CASH):
     if cart and user_id:
-        r = Receipt(user_id=int(user_id))
+        r = Receipt(user_id=int(user_id), payment_method=payment_method)
         db.session.add(r)
         for c in cart.values():
             d = ReceiptDetails(quantity=int(c['quantity']), price=float(c['price']),
@@ -350,7 +377,6 @@ def save_comment(content, product_id):
     return c
 
 
-## Phone number related helpers removed
 
 
 

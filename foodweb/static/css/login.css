@@ -39,3 +39,15 @@ a.forgot_pass {
    margin: 2%;
 }
 
+/* CSS cho reCAPTCHA */
+#recaptcha-container {
+    display: flex;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+#recaptcha-container .g-recaptcha {
+    transform: scale(0.9);
+    transform-origin: 0 0;
+}
+

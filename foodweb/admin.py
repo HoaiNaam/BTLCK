@@ -1,4 +1,4 @@
-from foodweb.models import Category, Product, Tag, User, Receipt, ReceiptDetails, UserRole
+from foodweb.models import Category, Product, Tag, User, Receipt, ReceiptDetails, UserRole, Restaurant, PaymentMethod
 from foodweb import db, app, dao
 from flask_admin import Admin, BaseView, expose, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
@@ -68,16 +68,10 @@ class ProductView(ModelView):
                 if upload_result and upload_result.get('secure_url'):
                     model.image = upload_result['secure_url']
         except Exception:
-            # If upload fails, keep previous image value
             pass
         return super(ProductView, self).on_model_change(form, model, is_created)
 
     def after_model_change(self, form, model, is_created):
-        """Route product to proper restaurant menu based on category.
-
-        - If category name is 'Thức ăn nhanh' -> add to restaurant 2, remove from 1.
-        - Else -> add to restaurant 1, remove from 2.
-        """
         try:
             cate = None
             # model.category may be available if relationship is loaded
@@ -216,13 +210,37 @@ class UserView(AuthenticatedModelView):
 
 
 class ReceiptView(AuthenticatedModelView):
-    column_list = ['id', 'created_date', 'user']
+    column_list = ['id', 'created_date', 'user', 'payment_method']
     column_labels = {
         'id': 'Mã HĐ',
         'created_date': 'Ngày tạo',
         'user': 'Khách hàng',
         'user_id': 'Mã KH',
+        'payment_method': 'Phương thức thanh toán',
         'details': 'Chi tiết'
+    }
+    
+    def _payment_method_formatter(self, context, model, name):
+        """Custom formatter for payment method column"""
+        from markupsafe import Markup
+        if model.payment_method:
+            payment_method = model.payment_method
+            if payment_method.value == 1:
+                return Markup('<span class="badge bg-success"><i class="fas fa-money-bill-wave"></i> Tiền mặt</span>')
+            elif payment_method.value == 2:
+                return Markup('<span class="badge bg-primary"><i class="fas fa-university"></i> Chuyển khoản</span>')
+            elif payment_method.value == 3:
+                return Markup('<span class="badge bg-warning"><i class="fas fa-mobile-alt"></i> MoMo</span>')
+            elif payment_method.value == 4:
+                return Markup('<span class="badge bg-info"><i class="fas fa-credit-card"></i> ZaloPay</span>')
+            elif payment_method.value == 5:
+                return Markup('<span class="badge bg-secondary"><i class="fas fa-credit-card"></i> VNPay</span>')
+            else:
+                return Markup('<span class="badge bg-light text-dark">Không xác định</span>')
+        return Markup('<span class="badge bg-light text-dark">Không xác định</span>')
+    
+    column_formatters = {
+        'payment_method': _payment_method_formatter
     }
 
 
@@ -315,17 +333,108 @@ class OrdersView(BaseView):
     def confirm_pending(self, pending_id):
         order = dao.get_pending_order(pending_id)
         if order:
-            receipt_id = dao.save_receipt_for_user(order.get('cart'), order.get('user_id'))
+            # Lấy phương thức thanh toán từ pending order
+            payment_method_id = order.get('payment_method', 1)
+            payment_method = PaymentMethod(payment_method_id)
+            
+            receipt_id = dao.save_receipt_for_user(order.get('cart'), order.get('user_id'), payment_method)
             if receipt_id:
                 dao.update_order_status(receipt_id, 'confirmed')
                 dao.remove_pending_order(pending_id)
         return self.index()
 
+class RestaurantView(AuthenticatedModelView):
+    column_list = ['id', 'name', 'address', 'phone', 'email', 'active', 'created_date']
+    column_searchable_list = ['name', 'address', 'phone', 'email']
+    column_filters = ['active', 'created_date']
+    can_view_details = True
+    can_export = True
+    can_create = True
+    can_edit = True
+    can_delete = True
+    column_exclude_list = ['image', 'description']
+    column_labels = {
+        'id': 'Mã',
+        'name': 'Tên cơ sở',
+        'address': 'Địa chỉ',
+        'description': 'Mô tả',
+        'image': 'Ảnh',
+        'phone': 'Số điện thoại',
+        'email': 'Email',
+        'active': 'Kích hoạt',
+        'created_date': 'Ngày tạo'
+    }
+    
+    # Add a file upload control for restaurant image
+    form_excluded_columns = ('image', 'created_date')
+    form_extra_fields = {
+        'image_file': FileField('Ảnh cơ sở (tải từ máy)', validators=[Optional()])
+    }
+    
+    # Custom form labels
+    form_labels = {
+        'name': 'Tên cơ sở',
+        'address': 'Địa chỉ',
+        'description': 'Mô tả',
+        'phone': 'Số điện thoại',
+        'email': 'Email',
+        'active': 'Kích hoạt'
+    }
+    
+    # Form validation
+    form_args = {
+        'name': {
+            'validators': [Optional()],
+            'description': 'Nhập tên cơ sở (ví dụ: IMPROOK - Cơ sở 1)'
+        },
+        'address': {
+            'validators': [Optional()],
+            'description': 'Nhập địa chỉ đầy đủ của cơ sở'
+        },
+        'phone': {
+            'validators': [Optional()],
+            'description': 'Nhập số điện thoại liên hệ'
+        },
+        'email': {
+            'validators': [Optional()],
+            'description': 'Nhập email liên hệ'
+        }
+    }
+
+    def on_model_change(self, form, model, is_created):
+        """Upload selected image to Cloudinary and store its URL into model.image."""
+        try:
+            image_storage = getattr(form, 'image_file', None)
+            if image_storage and image_storage.data:
+                upload_result = cloudinary.uploader.upload(image_storage.data, folder='foodapp/restaurants')
+                if upload_result and upload_result.get('secure_url'):
+                    model.image = upload_result['secure_url']
+        except Exception:
+            # If upload fails, keep previous image value
+            pass
+        return super(RestaurantView, self).on_model_change(form, model, is_created)
+    
+    def on_model_delete(self, model):
+        """Cleanup related data before deletion."""
+        try:
+            # Add any cleanup logic here if needed
+            pass
+        except Exception:
+            pass
+        return super(RestaurantView, self).on_model_delete(model)
+    
+    def get_url(self, endpoint, **kwargs):
+        """Ensure proper URL generation for restaurant views."""
+        if endpoint == 'restaurant.index':
+            return '/admin/restaurant/'
+        return super(RestaurantView, self).get_url(endpoint, **kwargs)
+
+
 admin = Admin(app=app, name='QUẢN TRỊ BÁN HÀNG', template_mode='bootstrap4', index_view=MyAdminView(), 
              base_template='admin/master.html')
 admin.add_view(CategoryView(Category, db.session, name='Danh mục'))
-# admin.add_view(TagView(Tag, db.session, name='Thẻ'))
 admin.add_view(ProductView(Product, db.session, name='Sản phẩm'))
+admin.add_view(RestaurantView(Restaurant, db.session, name='Cơ sở'))
 admin.add_view(UserView(User, db.session, name='Tài khoản'))
 admin.add_view(ReceiptView(Receipt, db.session, name='Hóa đơn'))
 admin.add_view(ReceiptDetailsView(ReceiptDetails, db.session, name='Chi tiết hóa đơn'))

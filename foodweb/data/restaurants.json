@@ -2,14 +2,20 @@
   {
     "id": 1,
     "name": "IMPROOK - Cơ sở 1",
-    "address": "123 Đường A, Quận 1",
-    "image": "https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=1200&auto=format&fit=crop"
+    "address": "123 Đường A, Quận 1, TP.HCM",
+    "description": "Cơ sở chính của chuỗi IMPROOK, chuyên phục vụ các món trà sữa truyền thống và hiện đại. Không gian rộng rãi, thoáng mát, phù hợp cho các buổi gặp gỡ bạn bè và gia đình.",
+    "image": "https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=1200&auto=format&fit=crop",
+    "phone": "028-1234-5678",
+    "email": "cs1@improok.com"
   },
   {
     "id": 2,
     "name": "IMPROOK - Cơ sở 2",
-    "address": "456 Đường B, Quận 3",
-    "image": "https://images.unsplash.com/photo-1541542684-4a9c16f2782e?q=80&w=1200&auto=format&fit=crop"
+    "address": "456 Đường B, Quận 3, TP.HCM",
+    "description": "Cơ sở 2 chuyên về thức ăn nhanh và các món ăn vặt. Menu đa dạng với nhiều lựa chọn cho khách hàng trẻ tuổi. Không gian hiện đại, phong cách trẻ trung.",
+    "image": "https://res.cloudinary.com/djx6d4r2r/image/upload/v1756876347/foodapp/restaurants/yydue1xpf4umoetjhnzs.png",
+    "phone": "028-8765-4321",
+    "email": "cs2@improok.com"
   }
 ]
 
