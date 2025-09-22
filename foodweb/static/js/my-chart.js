@@ -21,24 +21,50 @@ function drawCateChart(labels, data) {
   });
 }
 
-function drawRevenueChart(labels, data) {
-const ctx = document.getElementById('cateChart');
+function drawRevenueChart(labels, revenues, quantities) {
+  const ctx = document.getElementById('cateChart');
 
   new Chart(ctx, {
     type: 'bar',
     data: {
       labels: labels,
-      datasets: [{
-        label: 'Số lượng',
-        data: data,
-        borderWidth: 1,
-        backgroundColor: ['red', 'green', 'blue', 'rgba(144, 180, 90, 0.8)', 'rgba(255, 180, 90, 0.8)']
-      }]
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Doanh thu (VNĐ)',
+          data: revenues,
+          yAxisID: 'y1',
+          borderWidth: 1,
+          backgroundColor: 'rgba(220, 53, 69, 0.7)'
+        },
+        {
+          type: 'line',
+          label: 'Số lượng',
+          data: quantities,
+          yAxisID: 'y2',
+          borderColor: 'rgba(25, 135, 84, 0.9)',
+          backgroundColor: 'rgba(25, 135, 84, 0.3)',
+          tension: 0.3,
+          fill: true
+        }
+      ]
     },
     options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      stacked: false,
       scales: {
-        y: {
-          beginAtZero: true
+        y1: {
+          type: 'linear',
+          position: 'left',
+          beginAtZero: true,
+          ticks: { callback: (v) => v.toLocaleString() }
+        },
+        y2: {
+          type: 'linear',
+          position: 'right',
+          beginAtZero: true,
+          grid: { drawOnChartArea: false }
         }
       }
     }

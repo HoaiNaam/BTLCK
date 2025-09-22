@@ -8,11 +8,11 @@ from werkzeug.utils import secure_filename
 import os
 import uuid
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from foodweb import app, dao, admin, login, utils, db
 from flask_login import login_user, logout_user, login_required, current_user
-from foodweb.models import Receipt, UserRole, PaymentMethod
+from foodweb.models import Receipt, UserRole, PaymentMethod, Category
 from foodweb.decorators import annonymous_user
 import cloudinary.uploader
 from werkzeug.utils import redirect
@@ -255,13 +255,14 @@ def restaurant_menu(restaurant_id):
             dao.ensure_fast_food_items_for_restaurant(2)
     except Exception as ex:
         print(str(ex))
-    product_ids = dao.get_restaurant_menu_product_ids(restaurant_id)
-    # Only show products explicitly mapped to this restaurant; do not fallback to all products
-    products = dao.load_products_by_ids(product_ids)
-    # Compute categories available for this restaurant to narrow header menu
-    # Prefer explicit category mapping per restaurant if available
-    cate_ids = dao.get_restaurant_category_ids(restaurant_id)
-    categories_for_restaurant = dao.load_categories_by_ids(cate_ids) if cate_ids else dao.load_categories_by_product_ids(product_ids)
+    # Compute categories for this restaurant strictly by DB relation
+    try:
+        cate_ids = [int(c.id) for c in Category.query.filter(Category.restaurant_id == int(restaurant_id)).all()]
+    except Exception:
+        cate_ids = []
+    categories_for_restaurant = dao.load_categories_by_ids(cate_ids)
+    # Load products that belong to these categories
+    products = dao.load_products_by_category_ids(cate_ids)
     return render_template('restaurant_menu.html', restaurant=restaurant, products=products, categories=categories_for_restaurant)
 
 
@@ -331,6 +332,34 @@ def pay():
             return jsonify({"status": 200, "pending_id": pending_id})
 
     return jsonify({"status": 200})
+
+
+@login_required
+def cancel_pending(pending_id):
+    try:
+        order = dao.get_pending_order(pending_id)
+        if not order:
+            return jsonify({"status": 404, "message": "Đơn không tồn tại"})
+
+        # Chỉ chủ đơn mới được hủy
+        if int(order.get("user_id")) != int(current_user.id):
+            return jsonify({"status": 403, "message": "Không có quyền hủy đơn này"})
+
+        # Kiểm tra thời gian tạo đơn <= 60 giây
+        created_at_str = order.get("created_at")
+        try:
+            created_at = datetime.fromisoformat(created_at_str)
+        except Exception:
+            created_at = datetime.now() - timedelta(minutes=5)
+        if (datetime.now() - created_at).total_seconds() > 60:
+            return jsonify({"status": 410, "message": "Hết thời gian hủy đơn (quá 60 giây)"})
+
+        # Không ghi nhận hóa đơn khi khách hàng hủy trong thời gian cho phép
+        # Cập nhật trạng thái pending thành canceled để admin còn thấy ở màn hình Đơn hàng
+        dao.cancel_pending_order(pending_id)
+        return jsonify({"status": 200, "pending_id": pending_id, "state": "canceled"})
+    except Exception as ex:
+        return jsonify({"status": 500, "message": str(ex)})
 
 
 def comments(product_id):

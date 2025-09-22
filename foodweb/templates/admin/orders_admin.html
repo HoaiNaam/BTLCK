@@ -26,6 +26,10 @@
         <h6>Đơn đã xác nhận</h6>
         <div class="value">{{ confirmed_count }}</div>
     </div>
+    <div class="stat-card">
+        <h6>Đơn đã hủy</h6>
+        <div class="value">{{ canceled_count }}</div>
+    </div>
     
 </div>
 
@@ -111,12 +115,14 @@
             <td>
                 {% if statuses.get(r.id) == 'confirmed' %}
                     <span class="status-badge status-confirmed">Đã xác nhận</span>
+                {% elif statuses.get(r.id) == 'canceled' %}
+                    <span class="badge bg-danger">Đã hủy</span>
                 {% else %}
                     <span class="status-badge status-pending">pending</span>
                 {% endif %}
             </td>
             <td>
-                {% if statuses.get(r.id) != 'confirmed' %}
+                {% if statuses.get(r.id) != 'confirmed' and statuses.get(r.id) != 'canceled' %}
                 <a class="btn btn-success btn-sm" href="/admin/orders/{{ r.id }}/confirm">Xác nhận</a>
                 {% else %}
                 <span class="text-success">—</span>
@@ -124,6 +130,33 @@
             </td>
         </tr>
         {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="admin-card">
+    <h4><i class="fa-solid fa-ban"></i> Đơn đã hủy</h4>
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>Pending ID</th>
+            <th>Khách hàng</th>
+            <th>SL món</th>
+            <th>Phương thức thanh toán</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for o in canceled_pending_orders %}
+        <tr>
+            <td>#{{ o.id }}</td>
+            <td>{{ pending_user_names.get(o.user_id|string) or o.user_id }}</td>
+            <td>{{ o.cart | length }}</td>
+            <td><span class="badge bg-danger">Đã hủy</span></td>
+        </tr>
+        {% endfor %}
+        {% if not canceled_pending_orders %}
+        <tr><td colspan="4" class="text-muted">Không có đơn hủy mới</td></tr>
+        {% endif %}
         </tbody>
     </table>
 </div>

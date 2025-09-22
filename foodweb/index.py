@@ -19,6 +19,7 @@ app.add_url_rule('/api/cart', 'add-cart', controllers.add_to_cart, methods=['pos
 app.add_url_rule('/api/cart/<product_id>', 'update-cart', controllers.update_cart, methods=['put'])
 app.add_url_rule('/api/cart/<product_id>', 'delete-cart', controllers.delete_cart, methods=['delete'])
 app.add_url_rule('/api/pay', 'pay', controllers.pay, methods=['post'])
+app.add_url_rule('/api/pending/<pending_id>/cancel', 'cancel-pending', controllers.cancel_pending, methods=['post'])
 app.add_url_rule('/api/products/<product_id>/comments', 'comment-list', controllers.comments)
 app.add_url_rule('/api/products/<product_id>/comments', 'comment-add', controllers.add_comment, methods=['post'])
 

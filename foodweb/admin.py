@@ -3,12 +3,13 @@ from foodweb import db, app, dao
 from flask_admin import Admin, BaseView, expose, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user
-from wtforms import TextAreaField, FileField
+from wtforms import TextAreaField, FileField, SelectField
 from wtforms.validators import Optional
 import cloudinary.uploader
 from wtforms.widgets import TextArea
 from flask import request, redirect, url_for, flash
 from foodweb.models import Category
+from datetime import datetime, timedelta
 
 class AuthenticatedModelView(ModelView):
     def is_accessible(self):
@@ -156,31 +157,46 @@ class CategoryView(AuthenticatedModelView):
         'products': 'Sản phẩm'
     }
     column_searchable_list = ['name']
+    # Hide product and auto relationship field 'restaurant' from the create/edit form
+    form_excluded_columns = ('products', 'restaurant')
     # Require selecting a restaurant branch when creating/updating a category
+    # Dynamically populated in create_form/edit_form
     form_extra_fields = {
-        'restaurant_id': TextAreaField('Cơ sở (1 hoặc 2)')
+        'restaurant_id': SelectField('Cơ sở', choices=[], coerce=int)
     }
 
+    def _populate_restaurant_choices(self, form):
+        try:
+            choices = [(int(r.id), f"{r.name or 'Cơ sở'}") for r in db.session.query(Restaurant).filter(Restaurant.active == True).order_by(Restaurant.id.asc()).all()]
+            if not choices:
+                choices = [(1, 'Cơ sở 1')]
+            form.restaurant_id.choices = choices
+        except Exception:
+            form.restaurant_id.choices = [(1, 'Cơ sở 1')]
+        return form
+
+    def create_form(self):
+        form = super(CategoryView, self).create_form()
+        return self._populate_restaurant_choices(form)
+
+    def edit_form(self, obj=None):
+        form = super(CategoryView, self).edit_form(obj)
+        return self._populate_restaurant_choices(form)
+
     def on_model_change(self, form, model, is_created):
-        # Validate restaurant_id
+        # Validate selected restaurant exists
         rid_val = None
         try:
-            rid_val = int((form.restaurant_id.data or '').strip())
+            rid_val = int(form.restaurant_id.data)
         except Exception:
             rid_val = None
-        if rid_val not in (1, 2):
-            raise ValueError('Phải chọn Cơ sở là 1 hoặc 2')
+        # Ensure restaurant exists
+        if not rid_val or not db.session.get(Restaurant, rid_val):
+            raise ValueError('Cơ sở không tồn tại')
 
-        # Map category to selected restaurant; remove from the other
+        # Persist relation to DB
         try:
-            if rid_val == 1:
-                dao.add_category_to_restaurant(1, int(model.id) if model.id else None)
-                dao.remove_category_from_restaurants(int(model.id) if model.id else None)
-                dao.add_category_to_restaurant(1, int(model.id))
-            else:
-                dao.add_category_to_restaurant(2, int(model.id) if model.id else None)
-                dao.remove_category_from_restaurants(int(model.id) if model.id else None)
-                dao.add_category_to_restaurant(2, int(model.id))
+            model.restaurant_id = int(rid_val)
         except Exception:
             pass
         return super(CategoryView, self).on_model_change(form, model, is_created)
@@ -219,6 +235,7 @@ class ReceiptView(AuthenticatedModelView):
         'payment_method': 'Phương thức thanh toán',
         'details': 'Chi tiết'
     }
+
     
     def _payment_method_formatter(self, context, model, name):
         """Custom formatter for payment method column"""
@@ -303,6 +320,36 @@ class OrdersView(BaseView):
         receipts = db.session.query(Receipt).order_by(-Receipt.id).all()
         statuses = {r.id: dao.get_order_status(r.id) for r in receipts}
         pending_orders = dao.load_pending_orders()
+
+        # Auto-accept pending orders older than 60 seconds
+        try:
+            now = datetime.utcnow()
+            to_confirm = []
+            for o in list(pending_orders):
+                try:
+                    created_at = datetime.fromisoformat(o.get('created_at'))
+                except Exception:
+                    created_at = now - timedelta(minutes=5)
+                # Bỏ qua đơn đã hủy (vẫn hiển thị ở bảng pending như canceled)
+                if str(o.get('status')) == 'canceled':
+                    continue
+                if (now - created_at).total_seconds() > 60:
+                    to_confirm.append(o)
+            for o in to_confirm:
+                rid = dao.save_receipt_for_user(o.get('cart'), o.get('user_id'), PaymentMethod(o.get('payment_method', 1)))
+                if rid:
+                    dao.update_order_status(rid, 'confirmed')
+                    dao.remove_pending_order(o.get('id'))
+            if to_confirm:
+                # reload lists after changes
+                receipts = db.session.query(Receipt).order_by(-Receipt.id).all()
+                statuses = {r.id: dao.get_order_status(r.id) for r in receipts}
+                pending_orders = dao.load_pending_orders()
+        except Exception:
+            pass
+        # Separate canceled pending orders from active pending orders
+        canceled_pending_orders = [o for o in pending_orders if str(o.get('status')) == 'canceled']
+        pending_orders = [o for o in pending_orders if str(o.get('status')) != 'canceled']
         # Build a map of user_id -> name for pending orders
         user_ids = list({int(o.get('user_id')) for o in pending_orders if o.get('user_id') is not None})
         pending_user_names = {}
@@ -313,15 +360,18 @@ class OrdersView(BaseView):
         total_receipts = len(receipts)
         confirmed_count = sum(1 for r in receipts if statuses.get(r.id) == 'confirmed')
         pending_count = len(pending_orders)
+        canceled_count = len(canceled_pending_orders) + sum(1 for r in receipts if statuses.get(r.id) == 'canceled')
         return self.render(
             'admin/orders_admin.html',
             receipts=receipts,
             statuses=statuses,
             pending_orders=pending_orders,
+            canceled_pending_orders=canceled_pending_orders,
             pending_user_names=pending_user_names,
             total_receipts=total_receipts,
             confirmed_count=confirmed_count,
-            pending_count=pending_count
+            pending_count=pending_count,
+            canceled_count=canceled_count
         )
 
     @expose('/<int:receipt_id>/confirm')
@@ -365,8 +415,8 @@ class RestaurantView(AuthenticatedModelView):
         'created_date': 'Ngày tạo'
     }
     
-    # Add a file upload control for restaurant image
-    form_excluded_columns = ('image', 'created_date')
+    # Hide relationship 'categories' and image path from the form; we'll use upload field
+    form_excluded_columns = ('image', 'created_date', 'categories')
     form_extra_fields = {
         'image_file': FileField('Ảnh cơ sở (tải từ máy)', validators=[Optional()])
     }

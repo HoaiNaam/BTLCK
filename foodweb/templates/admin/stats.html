@@ -7,15 +7,15 @@
     <div class="col-md-5 col-sm-12">
         <table class="table">
             <tr>
-                <th>Id</th>
                 <th>Tên sản phẩm</th>
                 <th>Doanh thu</th>
+                <th>Số lượng</th>
             </tr>
             {% for s in stats %}
             <tr>
-                <td>{{ s[0] }}</td>
                 <td>{{ s[1] }}</td>
                 <td>{{ "{:,.0f}".format(s[2]) }} VNĐ</td>
+                <td>{{ s[3] }}</td>
             </tr>
             {% endfor %}
         </table>
@@ -45,14 +45,16 @@
 <script src="{{ url_for('static', filename='js/my-chart.js') }}"></script>
 <script>
     let labels = []
-    let data = []
+    let revenues = []
+    let quantities = []
     {% for s in stats %}
     labels.push('{{ s[1] }}')
-    data.push({{ s[2] }})
+    revenues.push({{ s[2] }})
+    quantities.push({{ s[3] }})
     {% endfor %}
 
     window.onload = function() {
-        drawRevenueChart(labels, data)
+        drawRevenueChart(labels, revenues, quantities)
     }
 </script>
 {% endblock %}

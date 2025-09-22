@@ -34,6 +34,7 @@ class Category(BaseModel):
     __tablename__ = 'category'
 
     name = Column(String(50), nullable=False)
+    restaurant_id = Column(Integer, ForeignKey('restaurant.id'), nullable=True)
     products = relationship('Product', backref='category', lazy=True)
 
     def __str__(self):
@@ -123,6 +124,7 @@ class Restaurant(BaseModel):
     email = Column(String(100))
     active = Column(Boolean, default=True)
     created_date = Column(DateTime, default=datetime.now())
+    categories = relationship('Category', backref='restaurant', lazy=True)
     
     def __str__(self):
         return self.name

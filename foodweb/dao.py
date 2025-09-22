@@ -98,8 +98,8 @@ def load_restaurants(kw=None):
         kw_norm = kw.strip().lower()
         query = query.filter(Restaurant.name.contains(kw_norm))
     
-    # Sắp xếp theo ID giảm dần để Cơ Sở 3 (ID: 1) xuất hiện cuối cùng
-    restaurants = query.order_by(Restaurant.id.desc()).all()
+    # Sắp xếp theo ID tăng dần: 1, 2, 3, ... (mặc định tương lai ID lớn sẽ vào sau)
+    restaurants = query.order_by(Restaurant.id.asc()).all()
     
     # Convert database objects to dictionary format for compatibility
     result = []
@@ -139,6 +139,12 @@ def load_products_by_ids(product_ids):
     return Product.query.filter(Product.id.in_(product_ids), Product.active.__eq__(True)).all()
 
 
+def load_products_by_category_ids(category_ids):
+    if not category_ids:
+        return []
+    return Product.query.filter(Product.category_id.in_(category_ids), Product.active.__eq__(True)).all()
+
+
 def load_categories_by_product_ids(product_ids):
     if not product_ids:
         return []
@@ -149,35 +155,50 @@ def load_categories_by_product_ids(product_ids):
 
 # -------------------- Restaurant <-> Categories mapping (JSON-based) --------------------
 def get_restaurant_category_ids(restaurant_id):
-    mapping = _read_json('restaurant_categories.json') or {}
-    return mapping.get(str(restaurant_id), [])
+    # Now read from DB: return list of category IDs linked to restaurant
+    try:
+        return [int(c.id) for c in Category.query.filter(Category.restaurant_id == int(restaurant_id)).all()]
+    except Exception:
+        return []
 
 
 def _set_restaurant_category_ids(restaurant_id, category_ids):
-    mapping = _read_json('restaurant_categories.json') or {}
-    mapping[str(restaurant_id)] = list({int(x) for x in category_ids})
-    _write_json('restaurant_categories.json', mapping)
-    return True
+    # Update DB relations: assign restaurant_id to given categories
+    try:
+        rid = int(restaurant_id)
+        ids = list({int(x) for x in category_ids})
+        db.session.query(Category).filter(Category.id.in_(ids)).update({Category.restaurant_id: rid}, synchronize_session=False)
+        db.session.commit()
+        return True
+    except Exception:
+        db.session.rollback()
+        return False
 
 
 def add_category_to_restaurant(restaurant_id: int, category_id: int):
-    ids = set(get_restaurant_category_ids(restaurant_id))
-    ids.add(int(category_id))
-    return _set_restaurant_category_ids(restaurant_id, list(ids))
+    try:
+        cate = db.session.get(Category, int(category_id))
+        if cate:
+            cate.restaurant_id = int(restaurant_id)
+            db.session.add(cate)
+            db.session.commit()
+            return True
+    except Exception:
+        db.session.rollback()
+    return False
 
 
 def remove_category_from_restaurants(category_id: int):
-    mapping = _read_json('restaurant_categories.json') or {}
-    changed = False
-    for k in list(mapping.keys()):
-        vals = set(mapping.get(k, []))
-        if int(category_id) in vals:
-            vals.remove(int(category_id))
-            mapping[k] = list(vals)
-            changed = True
-    if changed:
-        _write_json('restaurant_categories.json', mapping)
-    return True
+    try:
+        cate = db.session.get(Category, int(category_id))
+        if cate:
+            cate.restaurant_id = None
+            db.session.add(cate)
+            db.session.commit()
+        return True
+    except Exception:
+        db.session.rollback()
+        return False
 
 
 def load_categories_by_ids(category_ids):
@@ -245,7 +266,8 @@ def add_pending_order(user_id, cart, payment_method=PaymentMethod.CASH):
         "user_id": int(user_id),
         "cart": cart,
         "payment_method": payment_method_value,
-        "created_at": datetime.now().isoformat()
+        "created_at": datetime.now().isoformat(),
+        "status": "pending"
     }
     _write_json(PENDING_ORDERS_FILE, data)
     return pending_id
@@ -282,6 +304,20 @@ def remove_pending_order(pending_id):
         _write_json(PENDING_ORDERS_FILE, data)
         return True
     return False
+
+
+def cancel_pending_order(pending_id):
+    data = _read_json(PENDING_ORDERS_FILE) or {"orders": {}}
+    orders = data.get("orders", {})
+    order = orders.get(str(pending_id))
+    if not order:
+        return False
+    order["status"] = "canceled"
+    order["canceled_at"] = datetime.now().isoformat()
+    orders[str(pending_id)] = order
+    data["orders"] = orders
+    _write_json(PENDING_ORDERS_FILE, data)
+    return True
 
 
 def save_receipt_for_user(cart, user_id, payment_method=PaymentMethod.CASH):
@@ -349,7 +385,12 @@ def count_product_by_cate():
 
 
 def stats_revenue(kw=None, from_date=None, to_date=None):
-    query = db.session.query(Product.id, Product.name, func.sum(ReceiptDetails.price*ReceiptDetails.quantity))\
+    query = db.session.query(
+        Product.id,
+        Product.name,
+        func.sum(ReceiptDetails.price * ReceiptDetails.quantity).label('revenue'),
+        func.sum(ReceiptDetails.quantity).label('quantity')
+    )\
               .join(ReceiptDetails, ReceiptDetails.product_id.__eq__(Product.id))\
               .join(Receipt, ReceiptDetails.receipt_id.__eq__(Receipt.id))
 
@@ -362,7 +403,7 @@ def stats_revenue(kw=None, from_date=None, to_date=None):
     if to_date:
         query = query.filter(Receipt.created_date.__le__(to_date))
 
-    return query.group_by(Product.id).order_by(-Product.id).all()
+    return query.group_by(Product.id).order_by(func.sum(ReceiptDetails.price * ReceiptDetails.quantity).desc()).all()
 
 
 def load_comments(product_id):
