@@ -1,7 +1,7 @@
 from builtins import print
 
 from click import confirm
-from flask import render_template, request, redirect, session, jsonify
+from flask import render_template, request, redirect, session, jsonify, flash
 from flask_wtf import FlaskForm, RecaptchaField
 from flask_wtf.recaptcha import validators
 from werkzeug.utils import secure_filename
@@ -125,6 +125,13 @@ def register():
                              password=password,
                              avatar=avatar_url)
 
+                # Xóa các thông báo cũ (nếu có) để chỉ hiện 1 thông báo mới
+                try:
+                    session.pop('_flashes', None)
+                except Exception:
+                    pass
+
+                flash('Bạn đã đăng ký tài khoản thành công! Mời đăng nhập để đặt món ăn.', 'success')
                 return redirect('/login')
             except Exception as e:
                 print(f"Lỗi đăng ký: {str(e)}")

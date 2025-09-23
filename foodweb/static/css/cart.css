@@ -1,34 +1,41 @@
 h1 {
-    margin: 2% 2%;
-    color: black;
-    font-weight: bold;
+    margin: 24px 0 16px 0;
+    color: #111;
+    font-weight: 800;
 }
 
 div.cart-table {
     width: 100%;
-    height: 400px;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 div.cart-table-inner {
-    border-style: solid;
-    border-radius: 5%;
-    width: 65%;
-    height: 100%;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    padding: 12px 16px;
     overflow: auto;
-    margin: 0 auto;
+    margin: 0 auto 24px auto;
 }
 
 table.table {
     margin: 0 auto;
-    width: 90%;
+    width: 100%;
 }
 
 table.table tr th {
-    padding-top: 3%;
+    padding: 12px;
 }
 
 table.table, tr, th {
-    height: 80px;
+    height: auto;
+}
+
+/* Quantity input */
+.quantity-input {
+    max-width: 96px;
 }
 
 div.alert-total {
@@ -60,9 +67,13 @@ div.total-pay {
 */
 
 div.pay-infor {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 24px;
+    align-items: start;
+    max-width: 1200px;
+    margin: 0 auto 40px auto;
+    padding: 0 8px;
 }
 
 div.pay-infor-left {
@@ -74,8 +85,8 @@ div.pay-infor-right {
 }
 
 div.alert-total-inner > h3 > span {
-
-    font-weight: bold;
+    color: #dc3545;
+    font-weight: 700;
 }
 
 div.nothing-cart {
@@ -92,11 +103,11 @@ div.nothing-cart p {
 
 /* CSS cho phương thức thanh toán */
 .payment-methods {
-    margin-bottom: 20px;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: #f8f9fa;
+    margin-bottom: 12px;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background-color: #f8fafc;
 }
 
 .payment-methods h4 {
@@ -114,27 +125,27 @@ div.nothing-cart p {
 .form-check {
     display: flex;
     align-items: center;
-    padding: 8px 12px;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
     background-color: white;
     transition: all 0.3s ease;
     cursor: pointer;
 }
 
 .form-check:hover {
-    border-color: #007bff;
-    background-color: #f0f8ff;
+    border-color: #0d6efd;
+    background-color: #f0f6ff;
 }
 
 .form-check-input:checked + .form-check-label {
-    color: #007bff;
-    font-weight: bold;
+    color: #0d6efd;
+    font-weight: 700;
 }
 
 .form-check-input:checked ~ .form-check {
-    border-color: #007bff;
-    background-color: #e3f2fd;
+    border-color: #0d6efd;
+    background-color: #e9f2ff;
 }
 
 .form-check-label {
@@ -151,6 +162,12 @@ div.nothing-cart p {
 }
 
 .total-pay {
-    text-align: center;
-    margin-top: 20px;
+    position: sticky;
+    top: 16px;
+}
+
+@media (max-width: 992px) {
+    div.pay-infor {
+        grid-template-columns: 1fr;
+    }
 }

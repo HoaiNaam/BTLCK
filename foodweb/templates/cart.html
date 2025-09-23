@@ -13,7 +13,7 @@
 
 <div class="cart-table">
     <div class="cart-table-inner">
-        <table class="table">
+        <table class="table table-striped align-middle">
             <tr>
                 <th>Mã sản phẩm</th>
                 <th>Tên sản phẩm</th>
@@ -28,10 +28,10 @@
                 <td>{{ "{:,.0f}".format(c.price) }} VNĐ</td>
                 <td>
                     <input type="number" value="{{ c.quantity }}" onblur="updateCart({{ c.id }}, this)"
-                           class="form-control"/>
+                           class="form-control form-control-sm quantity-input"/>
                 </td>
                 <td>
-                    <input type="button" value="Xóa" onclick="deleteCart({{ c.id }})" class="btn btn-danger"/>
+                    <input type="button" value="Xóa" onclick="deleteCart({{ c.id }})" class="btn btn-outline-danger btn-sm"/>
                 </td>
             </tr>
             {% endfor %}

@@ -223,6 +223,31 @@ class UserView(AuthenticatedModelView):
         'receipts': 'Hóa đơn',
         'comments': 'Bình luận'
     }
+    # Ẩn phần hóa đơn và bình luận khi tạo/sửa tài khoản trong trang quản trị
+    form_excluded_columns = ('receipts', 'comments')
+    # Bật trang chi tiết và hiển thị bình luận kèm sản phẩm
+    can_view_details = True
+    column_details_list = ['id', 'name', 'username', 'image', 'active', 'user_role', 'comments']
+    def _comments_detail_formatter(self, context, model, name):
+        try:
+            from markupsafe import Markup, escape
+            if not getattr(model, 'comments', None):
+                return Markup('<em>Không có bình luận</em>')
+            items = []
+            for c in list(model.comments):
+                product_name = ''
+                try:
+                    product_name = (c.product.name if getattr(c, 'product', None) else '')
+                except Exception:
+                    product_name = ''
+                content = escape(c.content or '')
+                items.append(f'<li><strong>{escape(product_name)}</strong>: {content}</li>')
+            return Markup('<ul>' + '\n'.join(items) + '</ul>')
+        except Exception:
+            return ''
+    column_formatters_detail = {
+        'comments': _comments_detail_formatter
+    }
 
 
 class ReceiptView(AuthenticatedModelView):

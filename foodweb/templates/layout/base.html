@@ -15,9 +15,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment-with-locales.min.js"></script>
     <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
 
-    <script src="https://www.google.com/recaptcha/api.js"></script>
-    <script src="https://www.google.com/recaptcha/api.js?render=6LequfgkAAAAANl1Q3A-bKNvwLoGJcrqpfcQH7R4"></script>
-    <script src="{{ url_for('static', filename='js/reCaptcha.js') }}"></script>
+    
 
 
     {% block js %}{% endblock %}
@@ -26,6 +24,17 @@
 {% block header %}
 {% include 'layout/header.html' %}
 {% endblock %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="container mt-3">
+    {% set category, message = messages[-1] %}
+    <div class="alert alert-{{ 'success' if category == 'success' else ('danger' if category == 'error' else (category if category else 'info')) }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    </div>
+{% endif %}
+{% endwith %}
 <!--    <div class="container container-layout-full">-->
 {% block content required %}{% endblock %}
 <!--    </div>-->
